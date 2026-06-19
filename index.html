@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Buddy Watch · Watch together, free</title>
+  <meta name="description" content="Watch anything together in real time with a friend. Local files, screen sharing, chat and stickers. 100% free, peer-to-peer." />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%AC%3C/text%3E%3C/svg%3E" />
+</head>
+<body>
+
+  <!-- ===== LOBBY: create / join room ===== -->
+  <section id="lobby" class="screen">
+    <div class="lobby-card">
+      <div class="brand">
+        <span class="brand-emoji">🎬</span>
+        <h1>Buddy&nbsp;Watch</h1>
+        <p class="tagline">Watch anything together — free, peer-to-peer, no sign-up.</p>
+      </div>
+
+      <div class="lobby-actions">
+        <button id="btn-host" class="btn btn-primary btn-lg">
+          <span class="btn-emoji">🛋️</span> Create a room
+        </button>
+
+        <div class="divider"><span>or join a friend</span></div>
+
+        <form id="join-form" class="join-form">
+          <input
+            type="text"
+            id="room-code-input"
+            placeholder="Paste room code"
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <button type="submit" class="btn btn-primary">
+            <span class="btn-emoji">🚪</span> Join
+          </button>
+        </form>
+      </div>
+
+      <ul class="feature-list">
+        <li>📡 <b>Direct P2P link</b> — video never hits a server</li>
+        <li>📂 <b>Local files</b> — zero buffering, perfectly synced</li>
+        <li>🖥️ <b>Screen share</b> — stream literally anything</li>
+        <li>💬 <b>Chat & stickers</b> — react in real time</li>
+      </ul>
+
+      <p class="cost-note">Always free · No credit card · No account</p>
+    </div>
+  </section>
+
+  <!-- ===== ROOM: video + chat ===== -->
+  <section id="room" class="screen hidden">
+    <!-- top bar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <span class="brand-emoji">🎬</span>
+        <span class="topbar-title">Buddy Watch</span>
+      </div>
+      <div class="topbar-center">
+        <span class="connection-dot" id="conn-dot" title="Connection status"></span>
+        <span id="conn-status">Connecting…</span>
+      </div>
+      <div class="topbar-right">
+        <button id="btn-copy-code" class="btn btn-ghost btn-sm" title="Copy invite link">
+          <span class="btn-emoji">🔗</span> <span id="room-code-display">----</span>
+        </button>
+        <button id="btn-leave" class="btn btn-ghost btn-sm" title="Leave room">
+          <span class="btn-emoji">👋</span> Leave
+        </button>
+      </div>
+    </header>
+
+    <div class="room-body">
+      <!-- video side -->
+      <main class="video-side">
+        <div class="video-wrap" id="video-wrap">
+          <video id="player" playsinline></video>
+          <!-- remote screen share gets injected here -->
+          <div id="remote-screen-host" class="hidden"></div>
+
+          <div class="video-empty" id="video-empty">
+            <div class="empty-inner">
+              <span class="empty-emoji">🍿</span>
+              <p class="empty-title">Nothing playing yet</p>
+              <p class="empty-sub">Load a local file to watch it together, perfectly in sync.</p>
+            </div>
+          </div>
+
+          <div class="loading-overlay hidden" id="loading-overlay">
+            <div class="spinner"></div>
+            <p id="loading-text">Connecting…</p>
+          </div>
+        </div>
+
+        <!-- custom controls bar -->
+        <div class="controls" id="controls">
+          <button class="ctrl-btn" id="ctrl-play" title="Play / Pause (k)">
+            <span class="play-icon">▶️</span>
+            <span class="pause-icon hidden">⏸️</span>
+          </button>
+
+          <div class="ctrl-time" id="ctrl-current">0:00</div>
+
+          <input type="range" class="seek" id="ctrl-seek" min="0" max="1000" value="0" step="1" />
+
+          <div class="ctrl-time" id="ctrl-duration">0:00</div>
+
+          <div class="ctrl-spacer"></div>
+
+          <button class="ctrl-btn" id="ctrl-sync" title="Force re-sync to friend">🔄</button>
+
+          <div class="volume-group">
+            <button class="ctrl-btn" id="ctrl-mute" title="Mute (m)">🔊</button>
+            <input type="range" class="volume" id="ctrl-volume" min="0" max="1" step="0.05" value="1" />
+          </div>
+        </div>
+
+        <!-- source switcher -->
+        <div class="source-bar">
+          <button id="src-local" class="btn btn-primary">
+            <span class="btn-emoji">📂</span> Open local video
+          </button>
+          <button id="src-url" class="btn btn-ghost">
+            <span class="btn-emoji">🌐</span> Play from URL
+          </button>
+          <button id="src-screen" class="btn btn-ghost">
+            <span class="btn-emoji">🖥️</span> Share my screen
+          </button>
+          <input type="file" id="file-input" accept="video/*" hidden />
+        </div>
+      </main>
+
+      <!-- chat side -->
+      <aside class="chat-side">
+        <div class="chat-header">
+          <span>💬 Chat</span>
+          <span class="chat-peer-count" id="peer-count">—</span>
+        </div>
+
+        <div class="chat-messages" id="chat-messages">
+          <div class="chat-system">
+            <span>Welcome! Messages and stickers are sent directly to your friend.</span>
+          </div>
+        </div>
+
+        <div class="sticker-tray" id="sticker-tray"></div>
+
+        <form class="chat-input-row" id="chat-form">
+          <button type="button" id="btn-stickers" class="btn btn-ghost btn-sm" title="Stickers">😊</button>
+          <input
+            type="text"
+            id="chat-input"
+            placeholder="Type a message…"
+            autocomplete="off"
+            maxlength="1000"
+          />
+          <button type="submit" class="btn btn-primary btn-sm">
+            <span class="btn-emoji">➤</span>
+          </button>
+        </form>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ===== sticker picker overlay ===== -->
+  <div id="sticker-picker" class="sticker-picker hidden">
+    <div class="sp-header">
+      <span>Send a sticker</span>
+      <button id="sp-close" class="btn btn-ghost btn-sm">✕</button>
+    </div>
+    <div class="sp-grid" id="sp-grid"></div>
+  </div>
+
+  <!-- ===== URL prompt modal ===== -->
+  <div id="url-modal" class="modal hidden">
+    <div class="modal-card">
+      <h3>Play from URL</h3>
+      <p class="modal-sub">Paste a direct link to a video file (<code>.mp4</code>, <code>.webm</code>, <code>.m3u8</code>…). Both of you must be able to load it.</p>
+      <input type="text" id="url-input" placeholder="https://example.com/movie.mp4" autocomplete="off" spellcheck="false" />
+      <div class="modal-actions">
+        <button id="url-cancel" class="btn btn-ghost">Cancel</button>
+        <button id="url-ok" class="btn btn-primary">Play</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== toast ===== -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script src="js/stickers.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
